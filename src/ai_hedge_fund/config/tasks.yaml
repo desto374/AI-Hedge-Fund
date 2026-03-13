@@ -1,0 +1,82 @@
+research_task:
+  description: >
+    Use the market research tool and the live market data tool to produce a
+    short research brief for {ticker} using the provided thesis, macro view,
+    upcoming event, and live market snapshot. Focus on whether the catalyst and
+    current price action support a long, short, or neutral stance.
+  expected_output: >
+    A markdown research note with thesis, catalyst risk, macro context, and a
+    directional leaning.
+  agent: market_research_analyst
+
+technical_task:
+  description: >
+    Use the live market data tool first to fetch live price context and derived
+    indicators for {ticker}. Then use the technical indicator tool with the live
+    values to explain whether the setup is bullish, bearish, or mixed.
+  expected_output: >
+    A markdown technical note with the tool output and a concise directional view.
+  agent: technical_analyst
+
+sentiment_task:
+  description: >
+    Use the live news sentiment tool for {ticker}. Judge whether the latest
+    market-facing headlines support the trade idea or argue against it.
+  expected_output: >
+    A markdown sentiment note with the tool output and a concise directional view.
+  agent: sentiment_analyst
+
+options_task:
+  description: >
+    Use the live options chain tool and the options strategy tool to recommend a
+    simple options expression for {ticker} based on the directional bias implied
+    by the thesis and current volatility assumptions.
+  expected_output: >
+    A markdown options note with one primary strategy and when not to use it.
+  agent: options_strategist
+
+risk_task:
+  description: >
+    Use the portfolio state tool together with the risk budget tool. Combine the
+    live account context with the portfolio value, max position percent, stop
+    loss percent, conviction score, and current price. Return a disciplined
+    share count and notional size.
+  expected_output: >
+    A markdown risk memo with position size, risk limits, and trade invalidation rules.
+  agent: risk_manager
+
+backtest_task:
+  description: >
+    Use the backtest tool to run a simple historical test for {ticker}. Summarize
+    whether recent historical behavior supports or weakens confidence in the
+    current thesis.
+  expected_output: >
+    A markdown backtest note with strategy return, benchmark return, win rate,
+    drawdown, and what those results imply.
+  agent: strategy_backtester
+
+decision_task:
+  description: >
+    Review the reports from research, technicals, sentiment, options, risk, and
+    backtesting.
+    As the portfolio manager, make the final action for {ticker}: buy, sell,
+    reduce, or hold. The manager is the only role allowed to make the trade
+    decision. Include the reasoning, the confidence level, and the conditions
+    that would change the decision.
+  expected_output: >
+    A markdown investment decision memo with final action, confidence, and supporting rationale.
+  agent: portfolio_manager
+
+execution_task:
+  description: >
+    Take the approved portfolio manager decision and the risk sizing output, then
+    use the execution plan tool to create an execution handoff. Respect the
+    requested execution mode, broker, order type, and time in force. Do not
+    override the manager's decision. If execution mode is paper or live and the
+    decision is buy or sell, the tool may submit through Alpaca when the required
+    environment variables are present and ALPACA_ENABLE_SUBMISSION=true.
+  expected_output: >
+    A markdown execution handoff showing the final action, share count, execution
+    mode, broker note, order details, and whether an API such as Alpaca was used.
+  agent: execution_operator
+  output_file: output/trade_decision.md

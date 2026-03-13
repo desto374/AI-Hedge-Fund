@@ -40,7 +40,7 @@ This repo is built for research and paper-trading workflows first. It is not pro
 ├── .env.example
 ├── pyproject.toml
 ├── README.md
-├── src/crewai_github_template/
+├── src/ai_hedge_fund/
 │   ├── config/
 │   │   ├── agents.yaml
 │   │   └── tasks.yaml
@@ -106,7 +106,7 @@ HOME='/Volumes/new life /Websites/AI Hedge Fund' \
 CREWAI_STORAGE_DIR='/Volumes/new life /Websites/AI Hedge Fund/.crewai_storage' \
 CREWAI_TRACING_ENABLED=false \
 PYTHONPATH=src \
-./.venv311/bin/python -m crewai_github_template.main --ticker AAPL --execution-mode manual
+./.venv311/bin/python -m ai_hedge_fund.main --ticker AAPL --execution-mode manual
 ```
 
 Example paper-mode run with execution submission still disabled:
@@ -116,7 +116,7 @@ HOME='/Volumes/new life /Websites/AI Hedge Fund' \
 CREWAI_STORAGE_DIR='/Volumes/new life /Websites/AI Hedge Fund/.crewai_storage' \
 CREWAI_TRACING_ENABLED=false \
 PYTHONPATH=src \
-./.venv311/bin/python -m crewai_github_template.main \
+./.venv311/bin/python -m ai_hedge_fund.main \
   --ticker NVDA \
   --thesis "AI demand remains strong into the next earnings print" \
   --macro-view "Growth remains favored while rates stabilize" \

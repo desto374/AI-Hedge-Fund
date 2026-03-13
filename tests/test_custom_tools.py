@@ -1,4 +1,4 @@
-from crewai_github_template.tools.custom_tools import (
+from ai_hedge_fund.tools.custom_tools import (
     BacktestTool,
     ExecutionPlanTool,
     LiveMarketDataTool,
@@ -148,7 +148,7 @@ def test_live_market_data_tool_falls_back_to_yfinance(monkeypatch) -> None:
     monkeypatch.setenv("MARKET_DATA_PROVIDER", "alpaca")
     monkeypatch.delenv("ALPACA_API_KEY", raising=False)
     monkeypatch.delenv("ALPACA_SECRET_KEY", raising=False)
-    monkeypatch.setattr("crewai_github_template.tools.custom_tools.find_spec", lambda name: object())
+    monkeypatch.setattr("ai_hedge_fund.tools.custom_tools.find_spec", lambda name: object())
     monkeypatch.setitem(__import__("sys").modules, "yfinance", FakeYFinanceModule())
 
     result = tool._run("aapl", bar_limit=30)
@@ -176,7 +176,7 @@ def test_news_sentiment_tool_formats_news_summary(monkeypatch) -> None:
     monkeypatch.setenv("ALPACA_API_KEY", "key")
     monkeypatch.setenv("ALPACA_SECRET_KEY", "secret")
     monkeypatch.setattr(
-        "crewai_github_template.tools.custom_tools._fetch_json_with_headers",
+        "ai_hedge_fund.tools.custom_tools._fetch_json_with_headers",
         lambda url, headers: {
             "news": [
                 {"headline": "Company beats estimates", "summary": "Strong growth continues", "source": "Wire"},
@@ -227,7 +227,7 @@ def test_live_options_chain_tool_formats_yfinance_fallback(monkeypatch) -> None:
             return FakeTicker()
 
     monkeypatch.setenv("MARKET_DATA_PROVIDER", "yfinance")
-    monkeypatch.setattr("crewai_github_template.tools.custom_tools.find_spec", lambda name: object())
+    monkeypatch.setattr("ai_hedge_fund.tools.custom_tools.find_spec", lambda name: object())
     monkeypatch.setitem(__import__("sys").modules, "yfinance", FakeYF())
     result = tool._run("AAPL")
     assert "Provider: yfinance" in result
@@ -245,7 +245,7 @@ def test_portfolio_state_tool_formats_account(monkeypatch) -> None:
         ]
     )
     monkeypatch.setattr(
-        "crewai_github_template.tools.custom_tools._fetch_json_with_headers",
+        "ai_hedge_fund.tools.custom_tools._fetch_json_with_headers",
         lambda url, headers: next(responses),
     )
     result = tool._run("AAPL")
@@ -281,7 +281,7 @@ def test_backtest_tool_formats_strategy_metrics(monkeypatch) -> None:
         def Ticker(symbol: str):
             return FakeTicker()
 
-    monkeypatch.setattr("crewai_github_template.tools.custom_tools.find_spec", lambda name: object())
+    monkeypatch.setattr("ai_hedge_fund.tools.custom_tools.find_spec", lambda name: object())
     monkeypatch.setitem(__import__("sys").modules, "yfinance", FakeYF())
     result = tool._run("AAPL", period="1y")
     assert "Strategy: 20/50 moving-average crossover" in result
@@ -356,7 +356,7 @@ def test_execution_plan_tool_blocks_when_market_closed(monkeypatch) -> None:
     monkeypatch.delenv("ALPACA_ALLOW_EXTENDED_HOURS", raising=False)
     responses = iter([{"is_open": False}])
     monkeypatch.setattr(
-        "crewai_github_template.tools.custom_tools._fetch_json_with_headers",
+        "ai_hedge_fund.tools.custom_tools._fetch_json_with_headers",
         lambda url, headers: next(responses),
     )
     result = tool._run(
@@ -378,7 +378,7 @@ def test_execution_plan_tool_blocks_duplicate_open_order(monkeypatch) -> None:
     monkeypatch.setenv("ALPACA_ALLOW_EXTENDED_HOURS", "true")
     responses = iter([[{"symbol": "AAPL", "side": "buy", "qty": "25"}]])
     monkeypatch.setattr(
-        "crewai_github_template.tools.custom_tools._fetch_json_with_headers",
+        "ai_hedge_fund.tools.custom_tools._fetch_json_with_headers",
         lambda url, headers: {"is_open": True} if url.endswith("/clock") else next(responses),
     )
     result = tool._run(
