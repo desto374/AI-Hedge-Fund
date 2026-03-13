@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
+from ai_hedge_fund.run_batch import parse_tickers, run_for_tickers
 
 VALID_SIGNAL_VALUES = {"bullish", "bearish", "flat"}
 VALID_BOLLINGER_VALUES = {"upper", "middle", "lower"}
@@ -22,6 +23,26 @@ def build_parser() -> argparse.ArgumentParser:
         "--ticker",
         default=os.getenv("DEFAULT_TICKER", "AAPL"),
         help="Ticker symbol to evaluate.",
+    )
+    parser.add_argument(
+        "--tickers",
+        default="",
+        help="Comma-separated tickers to evaluate sequentially. Example: NVDA,MSFT,AMD",
+    )
+    parser.add_argument(
+        "--tickers-file",
+        default="",
+        help="Optional file with one ticker per line or comma-separated tickers.",
+    )
+    parser.add_argument(
+        "--companies",
+        default="",
+        help="Simple alias for --tickers. Example: NVDA,MSFT,AMD",
+    )
+    parser.add_argument(
+        "--companies-file",
+        default="",
+        help="Simple alias for --tickers-file.",
     )
     parser.add_argument(
         "--auto-discover",
@@ -62,6 +83,18 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=int(os.getenv("DISCOVERY_RETRY_ATTEMPTS", "2")),
         help="How many automatic discovery retries to attempt after an initial rejection.",
+    )
+    parser.add_argument(
+        "--top-percent",
+        type=float,
+        default=float(os.getenv("TOP_PERCENT", "30")),
+        help="When evaluating multiple companies, keep only the top percent for full analysis.",
+    )
+    parser.add_argument(
+        "--screen-cache-ttl-hours",
+        type=int,
+        default=int(os.getenv("SCREEN_CACHE_TTL_HOURS", "6")),
+        help="How long to reuse cached company screening data.",
     )
     parser.add_argument(
         "--thesis",
@@ -193,7 +226,13 @@ def _normalize_choice(value: str) -> str:
 
 
 def _validate_args(args: argparse.Namespace) -> None:
-    if not args.auto_discover and not args.ticker.strip():
+    if not args.auto_discover and not parse_tickers(
+        args.ticker,
+        args.tickers,
+        args.tickers_file,
+        args.companies,
+        args.companies_file,
+    ):
         raise SystemExit("Ticker cannot be empty.")
     if args.discovery_window_days <= 0:
         raise SystemExit("Discovery window days must be greater than zero.")
@@ -205,6 +244,10 @@ def _validate_args(args: argparse.Namespace) -> None:
         raise SystemExit("Discovery min score must be zero or greater.")
     if args.discovery_retry_attempts < 0:
         raise SystemExit("Discovery retry attempts must be zero or greater.")
+    if not 0 <= args.top_percent <= 100:
+        raise SystemExit("Top percent must be between 0 and 100.")
+    if args.screen_cache_ttl_hours < 0:
+        raise SystemExit("Screen cache ttl hours must be zero or greater.")
     if args.price <= 0:
         raise SystemExit("Price must be greater than zero.")
     if not 0 <= args.rsi <= 100:
@@ -261,6 +304,7 @@ def _build_inputs(args: argparse.Namespace) -> dict[str, Any]:
         "discovery_universe_file": args.discovery_universe_file.strip(),
         "discovery_min_score": args.discovery_min_score,
         "discovery_retry_attempts": args.discovery_retry_attempts,
+        "top_percent": args.top_percent,
         "thesis": args.thesis.strip(),
         "macro_view": args.macro_view.strip(),
         "upcoming_event": args.upcoming_event.strip(),
@@ -303,7 +347,10 @@ def run() -> None:
     _validate_args(args)
     configure_runtime_flags(args)
     Path("output").mkdir(exist_ok=True)
-    AIHedgeFundCrew().crew().kickoff(inputs=_build_inputs(args))
+    def _runner(run_args: argparse.Namespace) -> None:
+        AIHedgeFundCrew().crew().kickoff(inputs=_build_inputs(run_args))
+
+    run_for_tickers(args, _runner)
 
 
 if __name__ == "__main__":

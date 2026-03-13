@@ -1,8 +1,8 @@
 {
-  "ticker": "XFLT",
-  "discovery_status": "manual",
+  "ticker": "WW",
+  "discovery_status": "accepted",
   "final_action": "hold",
-  "confidence": "moderate",
-  "rationale": "Given the manual discovery status and mixed signals from various analyses, the optimal approach is to hold. The technicals are neutral with no clear trend bias; sentiment data is unavailable; options strategy suggests caution; risk controls recommend minimal exposure; and backtesting indicates limited and unsuccessful past trading signals. The upcoming earnings event adds uncertainty and event risk, warranting a wait-and-see stance until clearer directional confirmation emerges.",
-  "conditions_to_change": "A significant positive or negative surprise in the earnings announcement altering the fundamental outlook; emergence of clear and strong technical signals post-earnings; availability of confirming sentiment data; or a substantial change in conviction score or risk parameters would support revising this hold decision toward a buy or sell."
+  "confidence": "medium",
+  "rationale": "The overall evidence suggests a neutral to cautious stance ahead of the upcoming earnings. Discovery status is accepted, but momentum is negative, technicals are mixed with mild bearish signals, sentiment is neutral to slightly positive, and the backtest shows poor historical performance of momentum strategies. Risk controls recommend small position sizing and close monitoring. Given the uncertainty and potential volatility around earnings, holding the current position without new exposure is prudent until earnings results provide clearer direction.",
+  "conditions_to_change": "A confirmed positive earnings surprise or significantly improved momentum/technical signals could warrant a buy. Conversely, a confirmed negative earnings outcome or continuation of downward price momentum below the stop loss level would suggest reducing or selling the position."
 }

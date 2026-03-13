@@ -10,6 +10,7 @@ from typing import Any
 from urllib import error, request
 
 from dotenv import load_dotenv
+from ai_hedge_fund.run_batch import run_for_tickers
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -39,7 +40,10 @@ def run() -> None:
     _validate_args(args)
     configure_runtime_flags(args)
     Path("output").mkdir(exist_ok=True)
-    AIHedgeFundCrew().crew().kickoff(inputs=_build_inputs(args))
+    def _runner(run_args: argparse.Namespace) -> None:
+        AIHedgeFundCrew().crew().kickoff(inputs=_build_inputs(run_args))
+
+    run_for_tickers(args, _runner)
 
     summary = _build_alert_summary()
     _maybe_send_alerts(

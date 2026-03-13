@@ -109,6 +109,23 @@ PYTHONPATH=src \
 ./.venv311/bin/python -m ai_hedge_fund.main --ticker AAPL --execution-mode manual
 ```
 
+Multi-ticker manual run with defaults:
+
+```bash
+HOME='/Volumes/new life /Websites/AI Hedge Fund' \
+CREWAI_STORAGE_DIR='/Volumes/new life /Websites/AI Hedge Fund/.crewai_storage' \
+CREWAI_TRACING_ENABLED=false \
+PYTHONPATH=src \
+./.venv311/bin/python -m ai_hedge_fund.main \
+  --companies NVDA,MSFT,AMD
+```
+
+Or use a file:
+
+```bash
+./.venv311/bin/python -m ai_hedge_fund.main --companies-file ./tickers.txt
+```
+
 Example paper-mode run with execution submission still disabled:
 
 ```bash
@@ -152,6 +169,7 @@ Notes for discovery mode:
 - `DISCOVERY_RETRY_ATTEMPTS` or `--discovery-retry-attempts` automatically reruns discovery with a wider scan when the first pick is too weak
 - rejected discovery now hard-blocks non-`hold` execution paths in code, even if an agent tries to force a trade
 - it is a heuristic screener, not a full fundamental model
+- when you use `--companies` or `--companies-file`, the app screens the full list, keeps a cache, selects the top `30%` by default, and archives per-ticker outputs under `output/batch/`
 
 ## Data Behavior
 
@@ -209,13 +227,18 @@ CREWAI_STORAGE_DIR='/Volumes/new life /Websites/AI Hedge Fund/.crewai_storage' \
 CREWAI_TRACING_ENABLED=false \
 PYTHONPATH=src \
 ./.venv311/bin/python -m ai_hedge_fund.safe_scan \
-  --auto-discover \
-  --discovery-window-days 7 \
-  --discovery-min-score 2.5 \
-  --discovery-retry-attempts 2 \
-  --execution-mode manual \
+  --companies NVDA,MSFT,AMD,AVGO,META,NFLX,GOOGL,AMZN,AAPL,CRM \
+  --top-percent 30 \
   --notify-on accepted
 ```
+
+Simple operator model:
+
+- pass companies with `--companies` or `--companies-file`
+- the scanner keeps a cache of screening data
+- it ranks the full list before agent analysis
+- it runs full analysis only on the top `30%` by default
+- per-ticker outputs are archived under `output/batch/`
 
 One-shot automated scan with optional alerts:
 
