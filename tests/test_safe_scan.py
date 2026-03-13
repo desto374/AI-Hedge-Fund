@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from ai_hedge_fund.safe_scan import _enforce_safe_env, _validate_safe_mode
+from ai_hedge_fund.safe_scan import _build_simple_parser, _enforce_safe_env, _validate_safe_mode
 
 
 def test_enforce_safe_env_forces_non_submitting_mode(monkeypatch) -> None:
@@ -23,3 +23,10 @@ def test_validate_safe_mode_rejects_live() -> None:
 def test_validate_safe_mode_allows_manual_and_paper() -> None:
     assert _validate_safe_mode("manual") == "manual"
     assert _validate_safe_mode("paper") == "paper"
+
+
+def test_simple_parser_accepts_single_visible_companies_input() -> None:
+    parser = _build_simple_parser()
+    args = parser.parse_args(["NVDA,MSFT,AMD"])
+
+    assert args.companies_input == "NVDA,MSFT,AMD"

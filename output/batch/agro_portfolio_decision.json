@@ -1,0 +1,8 @@
+{
+  "ticker": "AGRO",
+  "discovery_status": "manual",
+  "final_action": "hold",
+  "confidence": "medium",
+  "rationale": "The technical analysis shows mixed signals with strong bullish momentum but overbought RSI suggesting short-term pullback risk; sentiment is positive, but no immediate catalysts exist. Risk and backtesting indicate potential volatility and the trade size is small with cautious position sizing. Given these factors, a hold stance with close monitoring is prudent until clearer direction or catalysts emerge.",
+  "conditions_to_change": "A confirmed breakout above resistance levels with RSI normalization, emergence of a near-term positive catalyst, or improved win rate and reduced drawdown in backtests could warrant a buy. Conversely, RSI moving higher into extreme overbought territory with weakening momentum indicators or negative macro developments should prompt reconsideration toward reducing or selling."
+}

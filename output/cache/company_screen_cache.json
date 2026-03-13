@@ -1,0 +1,145 @@
+{
+  "ACN": {
+    "fetched_at": "2026-03-13T06:32:48.299584+00:00",
+    "result": {
+      "company_name": "Accenture plc",
+      "earnings_date": "2026-03-19",
+      "momentum_20d_pct": -14.91992827183597,
+      "momentum_60d_pct": -27.806007948775058,
+      "news_score": 0.24,
+      "price": 196.0500030517578,
+      "score": -3.924991033979496,
+      "ticker": "ACN"
+    }
+  },
+  "AGRO": {
+    "fetched_at": "2026-03-13T06:32:48.299584+00:00",
+    "result": {
+      "company_name": "Adecoagro S.A.",
+      "earnings_date": "2026-03-16",
+      "momentum_20d_pct": 18.568242494428098,
+      "momentum_60d_pct": 48.66760464702882,
+      "news_score": 0.3,
+      "price": 10.600000381469727,
+      "score": 7.05,
+      "ticker": "AGRO"
+    }
+  },
+  "ASO": {
+    "fetched_at": "2026-03-13T06:32:48.299584+00:00",
+    "result": {
+      "company_name": "Academy Sports and Outdoors, In",
+      "earnings_date": "2026-03-17",
+      "momentum_20d_pct": -6.659938017904832,
+      "momentum_60d_pct": 0.0,
+      "news_score": 0.10499999999999998,
+      "price": 55.5,
+      "score": -0.3274922522381041,
+      "ticker": "ASO"
+    }
+  },
+  "ASRT": {
+    "fetched_at": "2026-03-13T06:32:48.299584+00:00",
+    "result": {
+      "company_name": "Assertio Holdings, Inc.",
+      "earnings_date": "2026-03-16",
+      "momentum_20d_pct": -2.761505681784171,
+      "momentum_60d_pct": 1.9298269683378333,
+      "news_score": 0.35,
+      "price": 11.619999885559082,
+      "score": 0.9156307038051313,
+      "ticker": "ASRT"
+    }
+  },
+  "DLTR": {
+    "fetched_at": "2026-03-13T06:32:48.299584+00:00",
+    "result": {
+      "company_name": "Dollar Tree, Inc.",
+      "earnings_date": "2026-03-16",
+      "momentum_20d_pct": -10.64000244140625,
+      "momentum_60d_pct": -13.990913107026536,
+      "news_score": 0.55,
+      "price": 111.69999694824219,
+      "score": -1.1959097307613256,
+      "ticker": "DLTR"
+    }
+  },
+  "DRI": {
+    "fetched_at": "2026-03-13T06:32:48.299584+00:00",
+    "result": {
+      "company_name": "Darden Restaurants, Inc.",
+      "earnings_date": "2026-03-19",
+      "momentum_20d_pct": -6.7484379263277,
+      "momentum_60d_pct": 8.859992322053213,
+      "news_score": 0.22999999999999998,
+      "price": 198.42999267578125,
+      "score": -0.17522204728652802,
+      "ticker": "DRI"
+    }
+  },
+  "FDX": {
+    "fetched_at": "2026-03-13T06:32:48.299584+00:00",
+    "result": {
+      "company_name": "FedEx Corporation",
+      "earnings_date": "2026-03-19",
+      "momentum_20d_pct": -3.8212219847912454,
+      "momentum_60d_pct": 24.192871010371842,
+      "news_score": 0.24,
+      "price": 353.1300048828125,
+      "score": 1.4623472519010943,
+      "ticker": "FDX"
+    }
+  },
+  "LEN": {
+    "fetched_at": "2026-03-13T06:32:48.299584+00:00",
+    "result": {
+      "company_name": "Lennar Corporation",
+      "earnings_date": "2026-03-12",
+      "momentum_20d_pct": -23.51433792095432,
+      "momentum_60d_pct": -22.476335104066102,
+      "news_score": -0.15000000000000002,
+      "price": 92.54000091552734,
+      "score": -5.023027925338842,
+      "ticker": "LEN"
+    }
+  },
+  "NKE": {
+    "fetched_at": "2026-03-13T06:32:48.299584+00:00",
+    "result": {
+      "company_name": "Nike, Inc.",
+      "earnings_date": "2026-03-31",
+      "momentum_20d_pct": -13.1836369000356,
+      "momentum_60d_pct": -19.77175027602418,
+      "news_score": -0.08000000000000003,
+      "price": 54.130001068115234,
+      "score": -4.3756004688397985,
+      "ticker": "NKE"
+    }
+  },
+  "SAIC": {
+    "fetched_at": "2026-03-13T06:32:48.299584+00:00",
+    "result": {
+      "company_name": "Science Applications Internatio",
+      "earnings_date": "2026-03-16",
+      "momentum_20d_pct": 11.335440958954202,
+      "momentum_60d_pct": -8.624475307774638,
+      "news_score": 0.22999999999999998,
+      "price": 91.54000091552734,
+      "score": 3.678223844221389,
+      "ticker": "SAIC"
+    }
+  },
+  "ZEPP": {
+    "fetched_at": "2026-03-13T06:32:48.299584+00:00",
+    "result": {
+      "company_name": "Zepp Health Corporation",
+      "earnings_date": "2026-03-15",
+      "momentum_20d_pct": -14.172570450057165,
+      "momentum_60d_pct": -27.652843236310986,
+      "news_score": 0.32999999999999996,
+      "price": 20.59000015258789,
+      "score": -2.341571306257146,
+      "ticker": "ZEPP"
+    }
+  }
+}

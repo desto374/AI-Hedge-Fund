@@ -227,14 +227,12 @@ CREWAI_STORAGE_DIR='/Volumes/new life /Websites/AI Hedge Fund/.crewai_storage' \
 CREWAI_TRACING_ENABLED=false \
 PYTHONPATH=src \
 ./.venv311/bin/python -m ai_hedge_fund.safe_scan \
-  --companies NVDA,MSFT,AMD,AVGO,META,NFLX,GOOGL,AMZN,AAPL,CRM \
-  --top-percent 30 \
-  --notify-on accepted
+  DLTR,SAIC,AGRO,LIDR,AGEN,AREN,ASRT,BTM,ASO,ABEO,AP,ZEPP,ALVO,BYDGF,LIEN,LEN,ACN,FDX,NKE,DRI
 ```
 
 Simple operator model:
 
-- pass companies with `--companies` or `--companies-file`
+- pass one ticker or a comma-separated ticker list as the only input
 - the scanner keeps a cache of screening data
 - it ranks the full list before agent analysis
 - it runs full analysis only on the top `30%` by default

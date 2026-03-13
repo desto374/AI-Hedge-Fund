@@ -1,5 +1,5 @@
 {
-  "company_name": "FDX",
+  "company_name": "AGRO",
   "days_until_earnings": 0,
   "discovery_attempts_used": 1,
   "discovery_mode": "manual",
@@ -11,7 +11,7 @@
   "momentum_60d_pct": 0.0,
   "news_score": 0.0,
   "price": 0.0,
-  "selected_ticker": "FDX",
-  "thesis": "Batch thesis",
-  "upcoming_event": "Batch event"
+  "selected_ticker": "AGRO",
+  "thesis": "",
+  "upcoming_event": ""
 }

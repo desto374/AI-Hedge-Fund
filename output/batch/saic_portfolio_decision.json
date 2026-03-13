@@ -1,0 +1,8 @@
+{
+  "ticker": "SAIC",
+  "discovery_status": "manual",
+  "final_action": "hold",
+  "confidence": "medium",
+  "rationale": "Given the manual discovery status and lack of valid current price data, no trade can be prudent at this time. The fundamental thesis indicates potential long-term growth from EV transition and supply chain normalization, but technical indicators are mixed with no clear bullish momentum, and the moving average crossover backtest performed poorly. Sentiment is mildly supportive but neutral overall, and risk guidelines recommend no position without a valid price. Therefore, holding the current stance is advisable until clearer price data, technical confirmation, or near-term catalysts emerge.",
+  "conditions_to_change": "A valid market price for SAIC would enable proper position sizing and risk management to consider establishing a trade. Additionally, a confirmed bullish technical setup or upcoming positive catalysts such as earnings or macro improvements could warrant a buy decision. Conversely, sustained technical weakness, worsening sentiment, or negative fundamental developments could justify a sell or reduce action."
+}

@@ -243,3 +243,14 @@ def test_candidate_discovery_tool_blocks_manual_override_when_auto_locked(monkey
 
     assert "runtime is locked to auto-discover" in result
     assert "auto_discover=true" in result
+
+
+def test_candidate_discovery_tool_uses_forced_manual_ticker(monkeypatch) -> None:
+    tool = CandidateDiscoveryTool()
+    monkeypatch.setenv("AI_HEDGE_FUND_FORCE_MANUAL_TICKER", "true")
+    monkeypatch.setenv("AI_HEDGE_FUND_FORCED_TICKER", "FDX")
+
+    result = tool._run(ticker="", auto_discover=True, thesis="Batch thesis", upcoming_event="Batch event")
+
+    assert "Discovery mode: manual" in result
+    assert "Selected ticker: FDX" in result

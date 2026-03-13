@@ -86,6 +86,35 @@ class CandidateDiscoveryTool(BaseTool):
     ) -> str:
         normalized_ticker = ticker.strip().upper()
         force_auto_discover = os.getenv("AI_HEDGE_FUND_FORCE_AUTO_DISCOVER", "false").lower() == "true"
+        forced_ticker = os.getenv("AI_HEDGE_FUND_FORCED_TICKER", "").strip().upper()
+        force_manual_ticker = os.getenv("AI_HEDGE_FUND_FORCE_MANUAL_TICKER", "false").lower() == "true"
+        if force_manual_ticker and forced_ticker:
+            payload = {
+                "discovery_mode": "manual",
+                "discovery_status": "manual",
+                "selected_ticker": forced_ticker,
+                "company_name": forced_ticker,
+                "earnings_date": "",
+                "days_until_earnings": 0,
+                "discovery_score": 0.0,
+                "discovery_attempts_used": 1,
+                "price": 0.0,
+                "momentum_20d_pct": 0.0,
+                "momentum_60d_pct": 0.0,
+                "news_score": 0.0,
+                "upcoming_event": upcoming_event.strip(),
+                "thesis": thesis.strip(),
+                "instruction": "Use the selected ticker for all downstream analysis.",
+            }
+            _write_structured_output("discovery_selection.json", payload)
+            return (
+                "Discovery mode: manual\n"
+                f"Selected ticker: {forced_ticker}\n"
+                f"Upcoming event: {upcoming_event.strip()}\n"
+                f"Thesis: {thesis.strip()}\n"
+                "Instruction: Use the selected ticker for all downstream analysis.\n"
+                f"Structured payload: {json.dumps(payload, sort_keys=True)}"
+            )
         if force_auto_discover and not auto_discover:
             return (
                 "Discovery mode: auto\n"

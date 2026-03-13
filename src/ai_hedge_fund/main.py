@@ -36,12 +36,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--companies",
-        default="",
+        default=os.getenv("COMPANIES", ""),
         help="Simple alias for --tickers. Example: NVDA,MSFT,AMD",
     )
     parser.add_argument(
         "--companies-file",
-        default="",
+        default=os.getenv("COMPANIES_FILE", ""),
         help="Simple alias for --tickers-file.",
     )
     parser.add_argument(

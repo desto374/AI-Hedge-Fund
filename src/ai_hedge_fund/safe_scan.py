@@ -24,27 +24,34 @@ def _build_simple_parser():
     from ai_hedge_fund.automation import build_parser
 
     parser = build_parser()
+    parser.add_argument(
+        "companies_input",
+        nargs="?",
+        default="",
+        help="Company ticker input. Use one ticker or a comma-separated list.",
+    )
     visible = {
         "help",
-        "ticker",
-        "companies",
-        "companies_file",
-        "auto_discover",
-        "top_percent",
-        "notify_on",
-        "alert_prefix",
+        "companies_input",
     }
     for action in parser._actions:
         if action.dest not in visible:
             action.help = argparse.SUPPRESS
     parser.set_defaults(
+        ticker="",
+        tickers="",
+        tickers_file="",
+        auto_discover=False,
         execution_mode="manual",
         discovery_window_days=7,
         discovery_max_symbols=75,
         discovery_min_price=10.0,
         discovery_min_score=2.5,
         discovery_retry_attempts=2,
+        top_percent=30.0,
         screen_cache_ttl_hours=6,
+        notify_on=os.getenv("ALERT_NOTIFY_ON", "accepted"),
+        alert_prefix=os.getenv("ALERT_PREFIX", "[AI Hedge Fund]"),
     )
     return parser
 
@@ -62,6 +69,8 @@ def run() -> None:
     parser = _build_simple_parser()
     parser.description = "Run a safe local research scan with alerts and no order submission."
     args = parser.parse_args()
+    if args.companies_input.strip():
+        args.companies = args.companies_input
     args.execution_mode = _validate_safe_mode(args.execution_mode)
     _validate_args(args)
     _enforce_safe_env()
@@ -71,6 +80,12 @@ def run() -> None:
     print(
         "Safe scan mode enabled: execution_mode="
         f"{args.execution_mode}, ALPACA_ENABLE_SUBMISSION=false, ALPACA_KILL_SWITCH=true"
+    )
+    print(
+        "Safe scan inputs: "
+        f"auto_discover={args.auto_discover}, "
+        f"companies='{args.companies}', companies_file='{args.companies_file}', "
+        f"top_percent={args.top_percent}"
     )
     def _runner(run_args) -> None:
         AIHedgeFundCrew().crew().kickoff(inputs=_build_inputs(run_args))

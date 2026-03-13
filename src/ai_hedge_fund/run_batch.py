@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import shutil
 from pathlib import Path
 from typing import Any
@@ -71,14 +72,25 @@ def run_for_tickers(args: Any, runner: Any) -> list[str]:
     if not selected_results:
         raise SystemExit("Top percent selection returned no companies to analyze.")
     write_screen_summary(screen_results, selected_results)
+    print(
+        "Batch screening selected: "
+        + ", ".join(result.ticker for result in selected_results)
+        + f" out of {len(screen_results)} screened companies"
+    )
 
     archived_paths: list[str] = []
     original_ticker = getattr(args, "ticker", "")
     for result in selected_results:
         args.ticker = result.ticker
+        args.auto_discover = False
+        os.environ["AI_HEDGE_FUND_FORCED_TICKER"] = result.ticker
+        os.environ["AI_HEDGE_FUND_FORCE_MANUAL_TICKER"] = "true"
+        print(f"Running crew for ticker={args.ticker} auto_discover={args.auto_discover}")
         runner(args)
         archived_paths.extend(_archive_run_outputs(result.ticker))
     args.ticker = original_ticker
+    os.environ.pop("AI_HEDGE_FUND_FORCED_TICKER", None)
+    os.environ["AI_HEDGE_FUND_FORCE_MANUAL_TICKER"] = "false"
     return archived_paths
 
 
