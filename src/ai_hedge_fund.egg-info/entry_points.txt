@@ -1,0 +1,2 @@
+[console_scripts]
+ai-hedge-fund = crewai_github_template.main:run

@@ -1,0 +1,158 @@
+Metadata-Version: 2.4
+Name: ai-hedge-fund
+Version: 0.1.0
+Summary: A CrewAI-based AI hedge fund scaffold with specialist agents.
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: crewai<2.0.0,>=1.10.0
+Requires-Dist: python-dotenv<2.0.0,>=1.0.1
+Requires-Dist: pypdf<6.0.0,>=5.0.0
+Requires-Dist: yfinance<0.3.0,>=0.2.65
+Provides-Extra: dev
+Requires-Dist: pytest<9.0.0,>=8.0.0; extra == "dev"
+Requires-Dist: ruff<0.12.0,>=0.11.0; extra == "dev"
+
+# AI Hedge Fund
+
+This repository is a CrewAI scaffold for an AI hedge fund workflow where specialist
+agents report to a manager, and the manager is the only role that makes the
+trade decision.
+
+## Agent flow
+
+- `market_research_analyst`: evaluates thesis, macro backdrop, and catalyst risk
+- `technical_analyst`: scores the setup with RSI, MACD, moving averages, and Bollinger position
+- `sentiment_analyst`: summarizes news, social, and analyst revision tone
+- `options_strategist`: suggests a simple options expression
+- `risk_manager`: sizes the trade and enforces portfolio limits
+- `portfolio_manager`: reviews all reports and makes the final buy, sell, reduce, or hold decision
+- `execution_operator`: prepares the manual, paper, or API execution handoff without changing the decision
+
+## Alpaca
+
+You do not need Alpaca to build the research, analysis, risk, or manager layers.
+You only need a broker API such as Alpaca when you want the `execution_operator`
+to send paper or live orders instead of producing a handoff for manual execution.
+
+Use a local `.env` file with rotated credentials:
+
+```dotenv
+OPENAI_API_KEY=your_openai_api_key_here
+MODEL=gpt-4.1-mini
+DEFAULT_TICKER=AAPL
+MARKET_DATA_PROVIDER=alpaca
+ALPACA_API_KEY=your_rotated_alpaca_key
+ALPACA_SECRET_KEY=your_rotated_alpaca_secret
+ALPACA_BASE_URL=https://paper-api.alpaca.markets/v2
+ALPACA_DATA_BASE_URL=https://data.alpaca.markets/v2
+ALPACA_STOCK_FEED=iex
+ALPACA_OPTIONS_FEED=indicative
+ALPACA_ALLOW_EXTENDED_HOURS=false
+ALPACA_KILL_SWITCH=false
+ALPACA_ENABLE_SUBMISSION=false
+```
+
+Leave `ALPACA_ENABLE_SUBMISSION=false` until you are ready to let the execution
+agent submit paper orders.
+
+## Project layout
+
+```text
+.
+├── pyproject.toml
+├── src/crewai_github_template/
+│   ├── config/
+│   │   ├── agents.yaml
+│   │   └── tasks.yaml
+│   ├── tools/
+│   │   └── custom_tools.py
+│   ├── crew.py
+│   └── main.py
+└── tests/
+    └── test_custom_tools.py
+```
+
+## Current scope
+
+This starter now includes live market-data retrieval through Alpaca or `yfinance`,
+while the research and sentiment layers remain otherwise lightweight.
+
+- `LiveMarketDataTool`
+- `NewsSentimentTool`
+- `LiveOptionsChainTool`
+- `PortfolioStateTool`
+- `BacktestTool`
+- `MarketResearchTool`
+- `TechnicalIndicatorTool`
+- `OptionsStrategyTool`
+- `RiskBudgetTool`
+- `ExecutionPlanTool`
+
+## Setup
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .[dev]
+cp .env.example .env
+```
+
+Add your LLM provider key to `.env` so CrewAI can run.
+
+## Run
+
+```bash
+python -m crewai_github_template.main \
+  --ticker NVDA \
+  --thesis "AI demand stays strong into the next earnings print" \
+  --macro-view "Growth remains favored while rates stabilize" \
+  --upcoming-event "Quarterly earnings" \
+  --price 910 \
+  --rsi 61 \
+  --macd-signal bullish \
+  --moving-average-gap-pct 4.8 \
+  --bollinger-position upper \
+  --news-sentiment 0.35 \
+  --social-sentiment 0.20 \
+  --analyst-revision-trend up \
+  --implied-volatility-pct 38 \
+  --days-to-expiry 21 \
+  --portfolio-value 100000 \
+  --max-position-pct 5 \
+  --stop-loss-pct 4 \
+  --conviction 0.70 \
+  --execution-mode paper \
+  --broker Alpaca \
+  --order-type market \
+  --time-in-force day
+```
+
+The final memo is written to `output/trade_decision.md`.
+
+If `MARKET_DATA_PROVIDER=alpaca`, the tool will try Alpaca first and automatically
+fall back to `yfinance` when Alpaca data is unavailable. Set
+`MARKET_DATA_PROVIDER=yfinance` if you want to force read-only fallback data.
+
+The manager now also receives:
+- live news sentiment
+- live options-chain context
+- Alpaca account and positions state
+- a simple historical backtest
+
+Execution safety controls:
+- `ALPACA_KILL_SWITCH=true` blocks all submissions
+- `ALPACA_ALLOW_EXTENDED_HOURS=false` blocks submissions outside regular market hours
+- duplicate open orders with the same ticker, side, and share count are blocked
+
+## Next build phases
+
+1. Replace the local research and sentiment placeholders with real market/news data tools.
+2. Add historical data ingestion and backtests.
+3. Add paper trading through Alpaca or another broker API.
+4. Add portfolio state, PnL tracking, and exposure controls.
+
+## Test
+
+```bash
+pytest
+```
