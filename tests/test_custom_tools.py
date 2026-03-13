@@ -1,5 +1,6 @@
 from ai_hedge_fund.tools.custom_tools import (
     BacktestTool,
+    CandidateDiscoveryTool,
     ExecutionPlanTool,
     LiveMarketDataTool,
     LiveOptionsChainTool,
@@ -9,6 +10,7 @@ from ai_hedge_fund.tools.custom_tools import (
     PortfolioStateTool,
     RiskBudgetTool,
     TechnicalIndicatorTool,
+    TradeContextTool,
 )
 
 
@@ -22,6 +24,44 @@ def test_market_research_tool_formats_brief() -> None:
     )
     assert "Ticker: MSFT" in result
     assert "Core thesis: Cloud demand remains firm" in result
+
+
+def test_trade_context_tool_reads_structured_discovery_and_decision(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    (output_dir / "discovery_selection.json").write_text(
+        (
+            '{"discovery_status":"accepted","selected_ticker":"NVDA",'
+            '"upcoming_event":"Earnings call on 2026-03-18","thesis":"Auto-discovered."}'
+        ),
+        encoding="utf-8",
+    )
+    (output_dir / "portfolio_decision.json").write_text(
+        '{"ticker":"NVDA","final_action":"buy","confidence":"high"}',
+        encoding="utf-8",
+    )
+
+    tool = TradeContextTool()
+    result = tool._run(include_decision=True)
+
+    assert "Selected ticker: NVDA" in result
+    assert "Final action: buy" in result
+
+
+def test_candidate_discovery_tool_persists_structured_file(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    tool = CandidateDiscoveryTool()
+    result = tool._run(
+        ticker="AAPL",
+        auto_discover=False,
+        thesis="Manual thesis",
+        upcoming_event="Manual event",
+    )
+    saved = (tmp_path / "output" / "discovery_selection.json").read_text(encoding="utf-8")
+
+    assert "Structured payload:" in result
+    assert '"selected_ticker": "AAPL"' in saved
 
 
 def test_live_market_data_tool_formats_alpaca_snapshot(monkeypatch) -> None:
@@ -400,6 +440,34 @@ def test_execution_plan_tool_does_not_submit_hold_or_reduce() -> None:
         mode="paper",
         broker="Alpaca",
     )
+    assert "Manual review required for hold/reduce decisions." in result
+    assert "Discovery status: accepted" in result
+
+
+def test_execution_plan_tool_blocks_non_hold_when_discovery_rejected() -> None:
+    tool = ExecutionPlanTool()
+    result = tool._run(
+        ticker="AAPL",
+        action="buy",
+        shares=25,
+        mode="paper",
+        broker="Alpaca",
+        discovery_status="rejected",
+    )
+    assert "Discovery rejected the setup" in result
+
+
+def test_execution_plan_tool_allows_hold_when_discovery_rejected() -> None:
+    tool = ExecutionPlanTool()
+    result = tool._run(
+        ticker="AAPL",
+        action="hold",
+        shares=0,
+        mode="paper",
+        broker="Alpaca",
+        discovery_status="rejected",
+    )
+    assert "Discovery status: rejected" in result
     assert "Manual review required for hold/reduce decisions." in result
 
 

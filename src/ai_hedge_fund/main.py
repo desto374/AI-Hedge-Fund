@@ -7,7 +7,6 @@ from typing import Any
 
 from dotenv import load_dotenv
 
-
 VALID_SIGNAL_VALUES = {"bullish", "bearish", "flat"}
 VALID_BOLLINGER_VALUES = {"upper", "middle", "lower"}
 VALID_REVISION_VALUES = {"up", "down", "flat"}
@@ -23,6 +22,46 @@ def build_parser() -> argparse.ArgumentParser:
         "--ticker",
         default=os.getenv("DEFAULT_TICKER", "AAPL"),
         help="Ticker symbol to evaluate.",
+    )
+    parser.add_argument(
+        "--auto-discover",
+        action="store_true",
+        help="Select a ticker automatically based on upcoming earnings and simple momentum/news filters.",
+    )
+    parser.add_argument(
+        "--discovery-window-days",
+        type=int,
+        default=int(os.getenv("DISCOVERY_WINDOW_DAYS", "7")),
+        help="Maximum number of days until earnings for auto-discovered candidates.",
+    )
+    parser.add_argument(
+        "--discovery-max-symbols",
+        type=int,
+        default=int(os.getenv("DISCOVERY_MAX_SYMBOLS", "75")),
+        help="Maximum number of symbols to scan during auto-discovery.",
+    )
+    parser.add_argument(
+        "--discovery-min-price",
+        type=float,
+        default=float(os.getenv("DISCOVERY_MIN_PRICE", "10")),
+        help="Minimum share price for auto-discovered candidates.",
+    )
+    parser.add_argument(
+        "--discovery-universe-file",
+        default=os.getenv("DISCOVERY_UNIVERSE_FILE", ""),
+        help="Optional newline or CSV file with symbols to scan during auto-discovery.",
+    )
+    parser.add_argument(
+        "--discovery-min-score",
+        type=float,
+        default=float(os.getenv("DISCOVERY_MIN_SCORE", "2.5")),
+        help="Minimum discovery score required for an auto-discovered candidate.",
+    )
+    parser.add_argument(
+        "--discovery-retry-attempts",
+        type=int,
+        default=int(os.getenv("DISCOVERY_RETRY_ATTEMPTS", "2")),
+        help="How many automatic discovery retries to attempt after an initial rejection.",
     )
     parser.add_argument(
         "--thesis",
@@ -154,8 +193,18 @@ def _normalize_choice(value: str) -> str:
 
 
 def _validate_args(args: argparse.Namespace) -> None:
-    if not args.ticker.strip():
+    if not args.auto_discover and not args.ticker.strip():
         raise SystemExit("Ticker cannot be empty.")
+    if args.discovery_window_days <= 0:
+        raise SystemExit("Discovery window days must be greater than zero.")
+    if args.discovery_max_symbols <= 0:
+        raise SystemExit("Discovery max symbols must be greater than zero.")
+    if args.discovery_min_price <= 0:
+        raise SystemExit("Discovery min price must be greater than zero.")
+    if args.discovery_min_score < 0:
+        raise SystemExit("Discovery min score must be zero or greater.")
+    if args.discovery_retry_attempts < 0:
+        raise SystemExit("Discovery retry attempts must be zero or greater.")
     if args.price <= 0:
         raise SystemExit("Price must be greater than zero.")
     if not 0 <= args.rsi <= 100:
@@ -205,6 +254,13 @@ def _validate_args(args: argparse.Namespace) -> None:
 def _build_inputs(args: argparse.Namespace) -> dict[str, Any]:
     return {
         "ticker": args.ticker.strip().upper(),
+        "auto_discover": args.auto_discover,
+        "discovery_window_days": args.discovery_window_days,
+        "discovery_max_symbols": args.discovery_max_symbols,
+        "discovery_min_price": args.discovery_min_price,
+        "discovery_universe_file": args.discovery_universe_file.strip(),
+        "discovery_min_score": args.discovery_min_score,
+        "discovery_retry_attempts": args.discovery_retry_attempts,
         "thesis": args.thesis.strip(),
         "macro_view": args.macro_view.strip(),
         "upcoming_event": args.upcoming_event.strip(),
@@ -230,6 +286,8 @@ def _build_inputs(args: argparse.Namespace) -> dict[str, Any]:
     }
 
 
+def configure_runtime_flags(args: argparse.Namespace) -> None:
+    os.environ["AI_HEDGE_FUND_FORCE_AUTO_DISCOVER"] = "true" if args.auto_discover else "false"
 def run() -> None:
     load_dotenv()
     try:
@@ -243,6 +301,7 @@ def run() -> None:
         raise
     args = build_parser().parse_args()
     _validate_args(args)
+    configure_runtime_flags(args)
     Path("output").mkdir(exist_ok=True)
     AIHedgeFundCrew().crew().kickoff(inputs=_build_inputs(args))
 

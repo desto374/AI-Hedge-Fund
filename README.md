@@ -126,6 +126,33 @@ PYTHONPATH=src \
   --time-in-force day
 ```
 
+Auto-discovery run that selects a ticker with earnings inside the next week:
+
+```bash
+HOME='/Volumes/new life /Websites/AI Hedge Fund' \
+CREWAI_STORAGE_DIR='/Volumes/new life /Websites/AI Hedge Fund/.crewai_storage' \
+CREWAI_TRACING_ENABLED=false \
+PYTHONPATH=src \
+./.venv311/bin/python -m ai_hedge_fund.main \
+  --auto-discover \
+  --discovery-window-days 7 \
+  --discovery-max-symbols 75 \
+  --execution-mode manual
+```
+
+Notes for discovery mode:
+
+- it scores symbols with earnings inside the requested window
+- it prefers positive price momentum, price above the 20-day average, and better recent news tone
+- it scans a configurable universe from `DISCOVERY_UNIVERSE_FILE`, then Alpaca active US equities when keys are present, then a built-in liquid watchlist fallback
+- discovery now runs as the first CrewAI task, and downstream agents are instructed to use the selected ticker from that handoff
+- discovery and portfolio decision now emit structured task outputs, not just prose, so selected ticker and status are easier to reuse downstream
+- downstream agents now load persisted JSON context from `output/discovery_selection.json` and `output/portfolio_decision.json` through a dedicated tool
+- `DISCOVERY_MIN_SCORE` or `--discovery-min-score` can reject weak auto-discovered setups before the portfolio manager proceeds
+- `DISCOVERY_RETRY_ATTEMPTS` or `--discovery-retry-attempts` automatically reruns discovery with a wider scan when the first pick is too weak
+- rejected discovery now hard-blocks non-`hold` execution paths in code, even if an agent tries to force a trade
+- it is a heuristic screener, not a full fundamental model
+
 ## Data Behavior
 
 - `MARKET_DATA_PROVIDER=alpaca`: uses Alpaca first, then falls back to `yfinance`
@@ -163,6 +190,90 @@ Current status:
 - tool-layer tests pass
 - CrewAI boot path is verified
 - full live execution depends on working outbound API access from your machine
+
+## Automation
+
+Recommended first deployment: safe research scanner only.
+
+This wrapper forces:
+
+- `ALPACA_ENABLE_SUBMISSION=false`
+- `ALPACA_KILL_SWITCH=true`
+- no `live` execution mode
+
+Run it like this:
+
+```bash
+HOME='/Volumes/new life /Websites/AI Hedge Fund' \
+CREWAI_STORAGE_DIR='/Volumes/new life /Websites/AI Hedge Fund/.crewai_storage' \
+CREWAI_TRACING_ENABLED=false \
+PYTHONPATH=src \
+./.venv311/bin/python -m ai_hedge_fund.safe_scan \
+  --auto-discover \
+  --discovery-window-days 7 \
+  --discovery-min-score 2.5 \
+  --discovery-retry-attempts 2 \
+  --execution-mode manual \
+  --notify-on accepted
+```
+
+One-shot automated scan with optional alerts:
+
+```bash
+HOME='/Volumes/new life /Websites/AI Hedge Fund' \
+CREWAI_STORAGE_DIR='/Volumes/new life /Websites/AI Hedge Fund/.crewai_storage' \
+CREWAI_TRACING_ENABLED=false \
+PYTHONPATH=src \
+./.venv311/bin/python -m ai_hedge_fund.automation \
+  --auto-discover \
+  --discovery-window-days 7 \
+  --discovery-min-score 2.5 \
+  --discovery-retry-attempts 2 \
+  --notify-on accepted
+```
+
+Alert environment variables:
+
+```dotenv
+ALERT_NOTIFY_ON=accepted
+ALERT_PREFIX=[AI Hedge Fund]
+
+SLACK_WEBHOOK_URL=
+ALERT_WEBHOOK_URL=
+
+ALERT_EMAIL_TO=
+ALERT_EMAIL_FROM=
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USERNAME=
+SMTP_PASSWORD=
+SMTP_USE_TLS=true
+```
+
+Scheduling examples:
+
+- `cron`: run every weekday at 6:30 AM Pacific
+
+```cron
+30 6 * * 1-5 cd /Volumes/new\ life\ /Websites/AI\ Hedge\ Fund && HOME='/Volumes/new life /Websites/AI Hedge Fund' CREWAI_STORAGE_DIR='/Volumes/new life /Websites/AI Hedge Fund/.crewai_storage' CREWAI_TRACING_ENABLED=false PYTHONPATH=src ./.venv311/bin/python -m ai_hedge_fund.automation --auto-discover --discovery-window-days 7 --discovery-min-score 2.5 --discovery-retry-attempts 2 --notify-on accepted >> output/automation.log 2>&1
+```
+
+- `launchd`: use the same command in a LaunchAgent plist if you want a native macOS scheduler
+
+Ready-made `launchd` files in this repo:
+
+- plist: `deploy/com.aihedgefund.safe-scan.plist`
+- runner: `scripts/run_safe_scan.sh`
+
+Install on macOS with:
+
+```bash
+chmod +x /Volumes/new\ life\ /Websites/AI\ Hedge\ Fund/scripts/run_safe_scan.sh
+cp /Volumes/new\ life\ /Websites/AI\ Hedge\ Fund/deploy/com.aihedgefund.safe-scan.plist ~/Library/LaunchAgents/com.aihedgefund.safe-scan.plist
+launchctl unload ~/Library/LaunchAgents/com.aihedgefund.safe-scan.plist 2>/dev/null || true
+launchctl load ~/Library/LaunchAgents/com.aihedgefund.safe-scan.plist
+launchctl start com.aihedgefund.safe-scan
+```
 
 ## Current Limits
 

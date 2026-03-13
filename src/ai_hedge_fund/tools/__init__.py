@@ -2,6 +2,7 @@
 
 from ai_hedge_fund.tools.custom_tools import (
     BacktestTool,
+    CandidateDiscoveryTool,
     ExecutionPlanTool,
     LiveMarketDataTool,
     LiveOptionsChainTool,
@@ -11,10 +12,12 @@ from ai_hedge_fund.tools.custom_tools import (
     PortfolioStateTool,
     RiskBudgetTool,
     TechnicalIndicatorTool,
+    TradeContextTool,
 )
 
 __all__ = [
     "BacktestTool",
+    "CandidateDiscoveryTool",
     "ExecutionPlanTool",
     "LiveMarketDataTool",
     "LiveOptionsChainTool",
@@ -24,4 +27,5 @@ __all__ = [
     "PortfolioStateTool",
     "RiskBudgetTool",
     "TechnicalIndicatorTool",
+    "TradeContextTool",
 ]

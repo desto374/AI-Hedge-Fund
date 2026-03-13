@@ -1,3 +1,13 @@
+discovery_analyst:
+  role: >
+    Discovery Analyst
+  goal: >
+    Select the best ticker to analyze before the rest of the fund starts work.
+  backstory: >
+    You act like a pre-trade screener. You either confirm the manual ticker or
+    discover a higher-priority candidate with an earnings call inside the configured
+    window and hand that ticker to the rest of the team.
+
 market_research_analyst:
   role: >
     Market Research Analyst

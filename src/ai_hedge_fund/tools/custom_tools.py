@@ -4,6 +4,7 @@ import json
 import os
 from datetime import datetime, timezone
 from importlib.util import find_spec
+from pathlib import Path
 from typing import Any
 from typing import Optional
 from typing import Type
@@ -33,6 +34,206 @@ class MarketResearchInput(BaseModel):
     macro_view: str = Field(..., description="Macro context for the trade idea.")
     upcoming_event: str = Field(..., description="Closest relevant company or macro event.")
 
+
+class CandidateDiscoveryInput(BaseModel):
+    ticker: str = Field(default="", description="Optional manually provided ticker symbol.")
+    auto_discover: bool = Field(
+        default=False, description="Whether the system should discover a ticker automatically."
+    )
+    discovery_window_days: int = Field(
+        default=7, description="Maximum number of days until earnings for eligible candidates."
+    )
+    discovery_max_symbols: int = Field(
+        default=75, description="Maximum number of symbols to scan during discovery."
+    )
+    discovery_min_price: float = Field(
+        default=10.0, description="Minimum share price for eligible candidates."
+    )
+    discovery_universe_file: str = Field(
+        default="", description="Optional newline or CSV file with symbols to scan."
+    )
+    discovery_min_score: float = Field(
+        default=2.5, description="Minimum discovery score required for an auto-discovered candidate."
+    )
+    discovery_retry_attempts: int = Field(
+        default=2, description="How many automatic discovery retries to attempt after rejection."
+    )
+    thesis: str = Field(
+        default="", description="Current thesis text, used when manual ticker mode is active."
+    )
+    upcoming_event: str = Field(
+        default="", description="Current event text, used when manual ticker mode is active."
+    )
+
+
+class CandidateDiscoveryTool(BaseTool):
+    name: str = "candidate_discovery_tool"
+    description: str = "Select a candidate ticker ahead of earnings or confirm the manually supplied ticker."
+    args_schema: Type[BaseModel] = CandidateDiscoveryInput
+
+    def _run(
+        self,
+        ticker: str = "",
+        auto_discover: bool = False,
+        discovery_window_days: int = 7,
+        discovery_max_symbols: int = 75,
+        discovery_min_price: float = 10.0,
+        discovery_universe_file: str = "",
+        discovery_min_score: float = 2.5,
+        discovery_retry_attempts: int = 2,
+        thesis: str = "",
+        upcoming_event: str = "",
+    ) -> str:
+        normalized_ticker = ticker.strip().upper()
+        force_auto_discover = os.getenv("AI_HEDGE_FUND_FORCE_AUTO_DISCOVER", "false").lower() == "true"
+        if force_auto_discover and not auto_discover:
+            return (
+                "Discovery mode: auto\n"
+                "Discovery status: rejected\n"
+                "Rejection reason: runtime is locked to auto-discover, so manual override is not allowed.\n"
+                "Instruction: Re-run candidate_discovery_tool with auto_discover=true."
+            )
+        if not auto_discover:
+            payload = {
+                "discovery_mode": "manual",
+                "discovery_status": "manual",
+                "selected_ticker": normalized_ticker,
+                "company_name": normalized_ticker,
+                "earnings_date": "",
+                "days_until_earnings": 0,
+                "discovery_score": 0.0,
+                "discovery_attempts_used": 1,
+                "price": 0.0,
+                "momentum_20d_pct": 0.0,
+                "momentum_60d_pct": 0.0,
+                "news_score": 0.0,
+                "upcoming_event": upcoming_event.strip(),
+                "thesis": thesis.strip(),
+                "instruction": "Use the selected ticker for all downstream analysis.",
+            }
+            _write_structured_output("discovery_selection.json", payload)
+            return (
+                "Discovery mode: manual\n"
+                f"Selected ticker: {normalized_ticker}\n"
+                f"Upcoming event: {upcoming_event.strip()}\n"
+                f"Thesis: {thesis.strip()}\n"
+                "Instruction: Use the selected ticker for all downstream analysis.\n"
+                f"Structured payload: {json.dumps(payload, sort_keys=True)}"
+            )
+
+        candidate, attempts_used = _discover_with_retries(
+            discovery_window_days=discovery_window_days,
+            discovery_max_symbols=discovery_max_symbols,
+            discovery_min_price=discovery_min_price,
+            discovery_universe_file=discovery_universe_file,
+            discovery_min_score=discovery_min_score,
+            discovery_retry_attempts=discovery_retry_attempts,
+        )
+        if candidate.score < discovery_min_score:
+            payload = {
+                "discovery_mode": "auto",
+                "discovery_status": "rejected",
+                "selected_ticker": candidate.ticker,
+                "company_name": candidate.company_name,
+                "earnings_date": candidate.earnings_date.isoformat(),
+                "days_until_earnings": candidate.days_until_earnings,
+                "discovery_score": candidate.score,
+                "discovery_attempts_used": attempts_used,
+                "price": candidate.price,
+                "momentum_20d_pct": candidate.momentum_20d_pct,
+                "momentum_60d_pct": candidate.momentum_60d_pct,
+                "news_score": candidate.news_score,
+                "upcoming_event": candidate.upcoming_event,
+                "thesis": candidate.thesis,
+                "instruction": "Do not continue with trade analysis. Hold and wait for a stronger setup.",
+            }
+            _write_structured_output("discovery_selection.json", payload)
+            return (
+                "Discovery mode: auto\n"
+                "Discovery status: rejected\n"
+                f"Discovery attempts used: {attempts_used}\n"
+                f"Rejection reason: best candidate score {candidate.score:.2f} is below "
+                f"minimum threshold {discovery_min_score:.2f}\n"
+                f"Selected ticker: {candidate.ticker}\n"
+                f"Company: {candidate.company_name}\n"
+                f"Earnings date: {candidate.earnings_date.isoformat()}\n"
+                "Instruction: Do not continue with trade analysis. Hold and wait for a stronger setup.\n"
+                f"Structured payload: {json.dumps(payload, sort_keys=True)}"
+            )
+        payload = {
+            "discovery_mode": "auto",
+            "discovery_status": "accepted",
+            "selected_ticker": candidate.ticker,
+            "company_name": candidate.company_name,
+            "earnings_date": candidate.earnings_date.isoformat(),
+            "days_until_earnings": candidate.days_until_earnings,
+            "discovery_score": candidate.score,
+            "discovery_attempts_used": attempts_used,
+            "price": candidate.price,
+            "momentum_20d_pct": candidate.momentum_20d_pct,
+            "momentum_60d_pct": candidate.momentum_60d_pct,
+            "news_score": candidate.news_score,
+            "upcoming_event": candidate.upcoming_event,
+            "thesis": candidate.thesis,
+            "instruction": "Use the selected ticker for all downstream analysis.",
+        }
+        _write_structured_output("discovery_selection.json", payload)
+        return (
+            "Discovery mode: auto\n"
+            "Discovery status: accepted\n"
+            f"Discovery attempts used: {attempts_used}\n"
+            f"Selected ticker: {candidate.ticker}\n"
+            f"Company: {candidate.company_name}\n"
+            f"Earnings date: {candidate.earnings_date.isoformat()}\n"
+            f"Days until earnings: {candidate.days_until_earnings}\n"
+            f"Discovery score: {candidate.score:.2f}\n"
+            f"Price: {candidate.price:.2f}\n"
+            f"20d momentum: {candidate.momentum_20d_pct:.2f}%\n"
+            f"60d momentum: {candidate.momentum_60d_pct:.2f}%\n"
+            f"News score: {candidate.news_score:.2f}\n"
+            f"Upcoming event: {candidate.upcoming_event}\n"
+            f"Thesis: {candidate.thesis}\n"
+            "Instruction: Use the selected ticker for all downstream analysis.\n"
+            f"Structured payload: {json.dumps(payload, sort_keys=True)}"
+        )
+
+
+class TradeContextInput(BaseModel):
+    include_decision: bool = Field(
+        default=False, description="Whether to include the portfolio decision JSON if available."
+    )
+
+
+class TradeContextTool(BaseTool):
+    name: str = "trade_context_tool"
+    description: str = "Load persisted structured discovery and decision context for downstream tasks."
+    args_schema: Type[BaseModel] = TradeContextInput
+
+    def _run(self, include_decision: bool = False) -> str:
+        discovery = _read_structured_output("discovery_selection.json")
+        if discovery is None:
+            return "Trade context unavailable. discovery_selection.json has not been created yet."
+
+        lines = [
+            "Structured trade context",
+            f"Discovery status: {discovery.get('discovery_status', 'unknown')}",
+            f"Selected ticker: {discovery.get('selected_ticker', '')}",
+            f"Upcoming event: {discovery.get('upcoming_event', '')}",
+            f"Thesis: {discovery.get('thesis', '')}",
+        ]
+        if include_decision:
+            decision = _read_structured_output("portfolio_decision.json")
+            if decision is None:
+                lines.append("Portfolio decision: unavailable")
+            else:
+                lines.extend(
+                    [
+                        f"Decision ticker: {decision.get('ticker', '')}",
+                        f"Final action: {decision.get('final_action', '')}",
+                        f"Decision confidence: {decision.get('confidence', '')}",
+                    ]
+                )
+        return "\n".join(lines)
 
 class MarketResearchTool(BaseTool):
     name: str = "market_research_tool"
@@ -687,6 +888,9 @@ class ExecutionPlanInput(BaseModel):
     shares: int = Field(..., description="Recommended share quantity.")
     mode: str = Field(..., description="Execution mode: manual, paper, or live.")
     broker: str = Field(..., description="Broker or execution venue.")
+    discovery_status: str = Field(
+        default="accepted", description="Discovery status: accepted, rejected, or manual."
+    )
     order_type: str = Field(
         default="market", description="Order type such as market or limit."
     )
@@ -708,6 +912,7 @@ class ExecutionPlanTool(BaseTool):
         shares: int,
         mode: str,
         broker: str,
+        discovery_status: str = "accepted",
         order_type: str = "market",
         time_in_force: str = "day",
         limit_price: Optional[float] = None,
@@ -715,6 +920,7 @@ class ExecutionPlanTool(BaseTool):
         normalized_mode = mode.strip().lower()
         normalized_action = action.strip().lower()
         normalized_broker = broker.strip()
+        normalized_discovery_status = discovery_status.strip().lower()
         normalized_order_type = order_type.strip().lower()
         normalized_tif = time_in_force.strip().lower()
         validation_error = self._validate_execution_request(
@@ -722,6 +928,7 @@ class ExecutionPlanTool(BaseTool):
             action=normalized_action,
             shares=shares,
             mode=normalized_mode,
+            discovery_status=normalized_discovery_status,
             order_type=normalized_order_type,
             limit_price=limit_price,
         )
@@ -763,6 +970,7 @@ class ExecutionPlanTool(BaseTool):
             f"Shares: {shares}\n"
             f"Mode: {normalized_mode}\n"
             f"Broker: {broker_line}\n"
+            f"Discovery status: {normalized_discovery_status}\n"
             f"Order type: {normalized_order_type}\n"
             f"Time in force: {normalized_tif}"
             f"{limit_line}\n"
@@ -776,6 +984,7 @@ class ExecutionPlanTool(BaseTool):
         action: str,
         shares: int,
         mode: str,
+        discovery_status: str,
         order_type: str,
         limit_price: Optional[float],
     ) -> str | None:
@@ -785,6 +994,10 @@ class ExecutionPlanTool(BaseTool):
             return "Not submitted. Action must be one of: buy, sell, hold, reduce."
         if mode not in VALID_EXECUTION_MODES:
             return "Not submitted. Mode must be one of: manual, paper, live."
+        if discovery_status not in {"accepted", "rejected", "manual"}:
+            return "Not submitted. Discovery status must be one of: accepted, rejected, manual."
+        if discovery_status == "rejected" and action != "hold":
+            return "Not submitted. Discovery rejected the setup, so the action must remain hold."
         if order_type not in VALID_ORDER_TYPES:
             return "Not submitted. Order type must be one of: market, limit."
         if shares < 0:
@@ -1103,6 +1316,55 @@ def _mid_price(bid: float, ask: float) -> float:
     if bid > 0 and ask > 0:
         return (bid + ask) / 2
     return max(bid, ask, 0.0)
+
+
+def _structured_output_path(filename: str) -> Path:
+    return Path("output") / filename
+
+
+def _write_structured_output(filename: str, payload: dict[str, Any]) -> None:
+    path = _structured_output_path(filename)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+
+def _read_structured_output(filename: str) -> dict[str, Any] | None:
+    path = _structured_output_path(filename)
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+
+
+def _discover_with_retries(
+    discovery_window_days: int,
+    discovery_max_symbols: int,
+    discovery_min_price: float,
+    discovery_universe_file: str,
+    discovery_min_score: float,
+    discovery_retry_attempts: int,
+) -> tuple[Any, int]:
+    from ai_hedge_fund.discovery import discover_candidate
+
+    attempts_used = 0
+    scan_size = max(1, discovery_max_symbols)
+    candidate = None
+
+    for attempt in range(discovery_retry_attempts + 1):
+        attempts_used = attempt + 1
+        candidate = discover_candidate(
+            earnings_window_days=discovery_window_days,
+            max_symbols=scan_size,
+            min_price=discovery_min_price,
+            universe_file=discovery_universe_file,
+        )
+        if candidate.score >= discovery_min_score:
+            return candidate, attempts_used
+        scan_size = max(scan_size + discovery_max_symbols, scan_size * 2)
+
+    return candidate, attempts_used
 
 
 def _format_options_summary(

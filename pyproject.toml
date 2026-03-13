@@ -23,6 +23,8 @@ dev = [
 
 [project.scripts]
 ai-hedge-fund = "ai_hedge_fund.main:run"
+ai-hedge-fund-auto = "ai_hedge_fund.automation:run"
+ai-hedge-fund-safe-scan = "ai_hedge_fund.safe_scan:run"
 
 [tool.setuptools.packages.find]
 where = ["src"]

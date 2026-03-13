@@ -1,0 +1,8 @@
+{
+  "ticker": "XFLT",
+  "discovery_status": "manual",
+  "final_action": "hold",
+  "confidence": "moderate",
+  "rationale": "Given the manual discovery status and mixed signals from various analyses, the optimal approach is to hold. The technicals are neutral with no clear trend bias; sentiment data is unavailable; options strategy suggests caution; risk controls recommend minimal exposure; and backtesting indicates limited and unsuccessful past trading signals. The upcoming earnings event adds uncertainty and event risk, warranting a wait-and-see stance until clearer directional confirmation emerges.",
+  "conditions_to_change": "A significant positive or negative surprise in the earnings announcement altering the fundamental outlook; emergence of clear and strong technical signals post-earnings; availability of confirming sentiment data; or a substantial change in conviction score or risk parameters would support revising this hold decision toward a buy or sell."
+}
